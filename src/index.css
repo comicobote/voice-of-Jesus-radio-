@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cinzel", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-hand: "Caveat", cursive;
+}
+
+@layer utilities {
+  .glow-gold {
+    text-shadow: 0 0 10px rgba(234, 179, 8, 0.6), 0 0 30px rgba(234, 179, 8, 0.3);
+  }
+  .glow-sky {
+    text-shadow: 0 0 10px rgba(14, 165, 233, 0.7), 0 0 25px rgba(14, 165, 233, 0.4);
+  }
+  .glow-red {
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.7), 0 0 25px rgba(239, 68, 68, 0.4);
+  }
+  .border-glow-gold {
+    border-color: rgba(234, 179, 8, 0.3);
+    box-shadow: 0 0 20px rgba(234, 179, 8, 0.15), inset 0 0 10px rgba(234, 179, 8, 0.05);
+  }
+  .border-glow-sky {
+    border-color: rgba(14, 165, 233, 0.3);
+    box-shadow: 0 0 20px rgba(14, 165, 233, 0.15), inset 0 0 10px rgba(14, 165, 233, 0.05);
+  }
+  .bg-radial-heaven {
+    background: radial-gradient(circle at center, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 1) 100%);
+  }
+  .animation-pulse-subtle {
+    animation: pulse-subtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  .glow-text-heavenly {
+    background: linear-gradient(135deg, #ffffff 0%, #fee2e2 50%, #fef08a 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .85; transform: scale(1.02); }
+}
+
+/* Custom visualizer bars styling in App */
+.visualizer-bar {
+  transform-origin: bottom;
+  animation: visualizer-bounce 1s ease-in-out infinite alternate;
+}
+
+@keyframes visualizer-bounce {
+  0% { transform: scaleY(0.15); }
+  100% { transform: scaleY(1); }
+}
+

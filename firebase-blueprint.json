@@ -1,0 +1,95 @@
+{
+  "entities": {
+    "settings": {
+      "title": "Settings",
+      "description": "App configuration parameters and credentials",
+      "type": "object",
+      "properties": {
+        "secret_key": {
+          "type": "string",
+          "description": "Flutterwave API secret key"
+        },
+        "public_key": {
+          "type": "string",
+          "description": "Flutterwave API public key"
+        }
+      },
+      "required": ["secret_key"]
+    },
+    "campaign": {
+      "title": "Campaign",
+      "description": "Radio live campaign tracking",
+      "type": "object",
+      "properties": {
+        "total_received_ugx": {
+          "type": "number",
+          "description": "Total amount in UGX received from believers so far"
+        },
+        "target_ugx": {
+          "type": "number",
+          "description": "Goal target amount in UGX"
+        }
+      },
+      "required": ["total_received_ugx", "target_ugx"]
+    },
+    "donation": {
+      "title": "Donation",
+      "description": "An individual completed or pending mobile money support contribution",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Donor's display name"
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount in UGX contributed"
+        },
+        "email": {
+          "type": "string",
+          "description": "Donor's contact email"
+        },
+        "phone": {
+          "type": "string",
+          "description": "Donor's phone number"
+        },
+        "provider": {
+          "type": "string",
+          "description": "Mobile Money network provider"
+        },
+        "note": {
+          "type": "string",
+          "description": "A customized prayer or message of support"
+        },
+        "tx_ref": {
+          "type": "string",
+          "description": "Unique transaction reference string"
+        },
+        "status": {
+          "type": "string",
+          "description": "Donation state"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date and time transaction was recorded"
+        }
+      },
+      "required": ["name", "amount", "tx_ref", "status"]
+    }
+  },
+  "firestore": {
+    "/settings/{settingsId}": {
+      "schema": "settings",
+      "description": "Configuration metadata"
+    },
+    "/campaign/{campaignId}": {
+      "schema": "campaign",
+      "description": "Goal progression tracking data"
+    },
+    "/donations/{donationId}": {
+      "schema": "donation",
+      "description": "Completed or pending mobile money support list"
+    }
+  }
+}

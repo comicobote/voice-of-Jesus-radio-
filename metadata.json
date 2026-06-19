@@ -1,0 +1,6 @@
+{
+  "name": "Voice Of Jesus Radio",
+  "description": "Heavenly Online Christian Radio, broadcasting divine hope, scripture truths and high quality gospel beats live from Northern Uganda.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
