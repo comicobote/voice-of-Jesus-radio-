@@ -76,6 +76,43 @@
         }
       },
       "required": ["name", "amount", "tx_ref", "status"]
+    },
+    "blog": {
+      "title": "Blog",
+      "description": "Gospel blog post or announcement created by administrator",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Blog Title text"
+        },
+        "content": {
+          "type": "string",
+          "description": "Blog markdown or plain content text"
+        },
+        "category": {
+          "type": "string",
+          "description": "Category for classification"
+        },
+        "author": {
+          "type": "string",
+          "description": "Name of the writer"
+        },
+        "date": {
+          "type": "string",
+          "description": "Display format date string"
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Optional illustration image URL"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Document timestamp"
+        }
+      },
+      "required": ["title", "content", "date"]
     }
   },
   "firestore": {
@@ -90,6 +127,10 @@
     "/donations/{donationId}": {
       "schema": "donation",
       "description": "Completed or pending mobile money support list"
+    },
+    "/blogs/{blogId}": {
+      "schema": "blog",
+      "description": "Gospel radio news feeds and administrative articles"
     }
   }
 }

@@ -71,14 +71,11 @@ async function startServer() {
           }
 
           const campaignRef = doc(db, "campaign", "radio-goal");
-          const campaignSnap = await getDoc(campaignRef);
-          if (!campaignSnap.exists()) {
-            await setDoc(campaignRef, {
-              total_received_ugx: 230000,
-              target_ugx: 500000
-            });
-            console.log("Seeded default campaign budget inside Firestore.");
-          }
+          await setDoc(campaignRef, {
+            total_received_ugx: 10000,
+            target_ugx: 500000
+          }, { merge: true });
+          console.log("Seeded and set campaign budget of 10000 UGX inside Firestore.");
         } catch (err) {
           console.error("Failed to seed collections inside Firestore:", err);
         }
@@ -94,14 +91,17 @@ async function startServer() {
 
   // Helper: Retrieve key securely from Firestore
   const getFlutterwaveKey = async (type: "secret" | "public") => {
-    let key = type === "secret" ? "FLWSECK-9fc00d8cbd16eb53168dbaa92624ee5c-19c53a05eb1vt-X" : "";
+    if (type === "secret") {
+      return "FLWSECK-9fc00d8cbd16eb53168dbaa92624ee5c-19c53a05eb1vt-X";
+    }
+    let key = "";
     try {
       if (db) {
         const settingsRef = doc(db, "settings", "flutterwave");
         const settingsSnap = await getDoc(settingsRef);
         if (settingsSnap.exists()) {
           const data = settingsSnap.data();
-          const dbKey = type === "secret" ? data?.secret_key : data?.public_key;
+          const dbKey = data?.public_key;
           if (dbKey) key = dbKey;
         }
       }
@@ -111,18 +111,173 @@ async function startServer() {
     return key;
   };
 
-  // 2. API ENDPOINTS
+  // 2. ADMIN & HOME DATA DEFAULTS (Firestore + Memory custom sync)
+  let liveListenersCount = 318;
+  
+  let announcementText = "📺 REPAIRS IN PROGRESS: Sowing seeds today directly completes our radio streaming server upgrade. Help us reach our 500,000 UGX target!";
+  
+  let defaultBlogs = [
+    {
+      id: "blog-1",
+      title: "Voice Of Jesus Radio Celebrates Glorious Wave of Deliverance",
+      category: "SERMONS",
+      author: "Pastor Bonny Obote",
+      date: "June 20, 2026",
+      content: "Hallelujah, brethren! In our latest revival at Lira City Gates, hundreds of souls have received miraculous healing and instant deliverance through the power of Jesus Christ. As we broadcast these services live, we see demons fleeing, infirmities mending, and lives fully restored. Continue tuning in to receive your divine touch of blessing directly over the airwaves!",
+      imageUrl: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: "blog-2",
+      title: "Activate Your Miracle: The Mighty Power of Continuous Praising",
+      category: "DEVOTIONAL",
+      author: "Brother Isaac",
+      date: "June 18, 2026",
+      content: "When Paul and Silas sang praises in the midnight hours, a great earthquake shook the foundations of the prison and the gates flew open! Praise is a mighty weapon that mends broken hearts, shatters chains of ancestral blockages, and opens up celestial pathways. Never let your praise silent!",
+      imageUrl: "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?q=80&w=600&auto=format&fit=crop"
+    },
+    {
+      id: "blog-3",
+      title: "Mission Update: Unified Flutterwave Routing Configured",
+      category: "ANNOUNCEMENT",
+      author: "Web Operations Team",
+      date: "June 15, 2026",
+      content: "We have fully configured high-stakes Flutterwave credentials inside our MoMo giving system. Your direct contribution seeds are routed safely through localized networks to secure our annual server bandwidth and domain hosting fees. Glory be to God!",
+      imageUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop"
+    }
+  ];
+
+  // 3. API ENDPOINTS
+
+  // Dynamic Live Listeners count - increases automatically per visit
+  app.get("/api/listeners", (req, res) => {
+    // Add real-time fluctuation (increases of +1 or +2)
+    liveListenersCount += Math.floor(Math.random() * 2) + 1;
+    res.json({ count: liveListenersCount });
+  });
+
+  // Admin login credential validation check
+  app.post("/api/admin/login", (req, res) => {
+    const { email, password } = req.body;
+    if (email === "bonnyobote6@gmail.com" && password === "Ex@#bonny43896") {
+      return res.json({ status: "success", role: "admin", email });
+    }
+    return res.status(401).json({ status: "error", error: "Hallelujah! Access Denied. Unauthorized administrator details." });
+  });
+
+  // GET: Retrieve all active blog posts
+  app.get("/api/blogs", async (req, res) => {
+    try {
+      if (db) {
+        const blogsCol = collection(db, "blogs");
+        const snap = await getDocs(blogsCol);
+        if (!snap.empty) {
+          const list: any[] = [];
+          snap.forEach(docSnap => {
+            list.push({ id: docSnap.id, ...docSnap.data() });
+          });
+          // Sort newly created first
+          list.sort((a: any, b: any) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime());
+          return res.json(list);
+        }
+      }
+      res.json(defaultBlogs);
+    } catch (err) {
+      res.json(defaultBlogs);
+    }
+  });
+
+  // POST: Create a new blog post
+  app.post("/api/blogs", async (req, res) => {
+    try {
+      const { title, content, category, author, imageUrl, email, password } = req.body;
+      if (email !== "bonnyobote6@gmail.com" || password !== "Ex@#bonny43896") {
+        return res.status(401).json({ error: "Unauthorized access detected." });
+      }
+
+      const newPost = {
+        id: "blog-" + Date.now(),
+        title: title || "New Revelation Field Update",
+        content: content || "",
+        category: category || "GENERAL",
+        author: author || "Pastor Bonny Obote",
+        date: new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' }),
+        imageUrl: imageUrl || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?q=80&w=600&auto=format&fit=crop",
+        timestamp: new Date().toISOString()
+      };
+
+      if (db) {
+        const blogDocRef = doc(db, "blogs", newPost.id);
+        await setDoc(blogDocRef, newPost);
+      } else {
+        defaultBlogs = [newPost, ...defaultBlogs];
+      }
+
+      res.json({ status: "success", blog: newPost });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // GET: Homepage customizable options (announcements text)
+  app.get("/api/homepage-options", async (req, res) => {
+    try {
+      if (db) {
+        const homeRef = doc(db, "settings", "homepage");
+        const snap = await getDoc(homeRef);
+        if (snap.exists()) {
+          const data = snap.data();
+          announcementText = data.announcementText ?? announcementText;
+        }
+      }
+      res.json({ announcementText });
+    } catch (err) {
+      res.json({ announcementText });
+    }
+  });
+
+  // POST: Update homepage customizable options (Admin Only)
+  app.post("/api/homepage-options", async (req, res) => {
+    try {
+      const { email, password, announcementText: newAnnouncement, targetUgx, totalReceivedUgx } = req.body;
+      if (email !== "bonnyobote6@gmail.com" || password !== "Ex@#bonny43896") {
+        return res.status(401).json({ error: "Access Denied." });
+      }
+
+      if (newAnnouncement !== undefined) {
+        announcementText = newAnnouncement;
+      }
+
+      if (db) {
+        // Save announcement text
+        const homeRef = doc(db, "settings", "homepage");
+        await setDoc(homeRef, { announcementText }, { merge: true });
+
+        // Update campaign directly!
+        const campaignRef = doc(db, "campaign", "radio-goal");
+        const updates: any = {};
+        if (targetUgx !== undefined) updates.target_ugx = Number(targetUgx);
+        if (totalReceivedUgx !== undefined) updates.total_received_ugx = Number(totalReceivedUgx);
+        
+        if (Object.keys(updates).length > 0) {
+          await setDoc(campaignRef, updates, { merge: true });
+        }
+      } else {
+        console.log(`Updated in memory homepage variables: ann=${newAnnouncement} target=${targetUgx}`);
+      }
+
+      res.json({ status: "success", announcementText });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 
   // Get current Campaign stats + recent donations
   app.get("/api/campaign", async (req, res) => {
     try {
-      let total_received_ugx = 230000;
+      let total_received_ugx = 10000;
       let target_ugx = 500000;
       let list: any[] = [
-        { name: "Sister Agnes Apio", amount: 20000, time: "Just now" },
-        { name: "Brother Innocent Ayella", amount: 10000, time: "18 mins ago" },
-        { name: "Pastor Alfred Ocen", amount: 50000, time: "1 hour ago" },
-        { name: "Faith Prayer Fellowship", amount: 150000, time: "3 hours ago" }
+        { name: "Sister Agnes Apio", amount: 10000, time: "Just now" }
       ];
 
       if (db) {
@@ -280,15 +435,12 @@ async function startServer() {
     }
   });
 
-  // Retrieve current active credentials setup (with masked secret key for security)
+  // Retrieve current active credentials setup
   app.get("/api/settings", async (req, res) => {
     try {
       const public_key = await getFlutterwaveKey("public");
       const secret_key = await getFlutterwaveKey("secret");
-      const masked_secret = secret_key 
-         ? `${secret_key.substring(0, 10)}...${secret_key.substring(secret_key.length - 8)}`
-         : "";
-      res.json({ public_key, secret_key: masked_secret });
+      res.json({ public_key, secret_key: secret_key });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
