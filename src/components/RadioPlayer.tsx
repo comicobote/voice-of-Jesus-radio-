@@ -19,7 +19,7 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
   
   // Custom status color classes
   const [statusColorClasses, setStatusColorClasses] = useState<string>(
-    "bg-stone-100 text-stone-700 border-stone-200"
+    "bg-[#1e3a8a]/40 text-white border-blue-400/30"
   );
   
   // Active listeners starting at 324, syncing automatically with server
@@ -97,13 +97,14 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
       setIsPlaying(false);
       setIsBuffering(false);
       setStatusText("PAUSED");
-      setStatusColorClasses("bg-stone-100 text-stone-600 border-stone-200");
+      setStatusColorClasses("bg-[#1e3a8a]/40 text-white border-blue-400/30");
       onAddBroadcastStatus?.("⏸️ Live Broadcast stream suspended.");
     } else {
-      setIsBuffering(true);
-      setStatusText("TUNING FEED...");
-      setStatusColorClasses("bg-red-50 text-[#df2027] border-red-200 animate-pulse");
-      onAddBroadcastStatus?.("📡 Connecting to global high-definition gospel stream server...");
+      setIsPlaying(true);
+      setIsBuffering(false);
+      setStatusText("LIVE ON AIR");
+      setStatusColorClasses("bg-[#fcd34d] text-[#1e1b4b] border-[#fcd34d] shadow-sm font-black");
+      onAddBroadcastStatus?.("📻 Hallelujah! Connected. Voice Of Jesus Radio is live.");
       
       try {
         if (!audioRef.current.src || audioRef.current.src !== DEFAULT_STREAM_URL) {
@@ -112,16 +113,9 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
         
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-          playPromise.then(() => {
-            setIsPlaying(true);
-            setIsBuffering(false);
-            setStatusText("LIVE ON AIR");
-            setStatusColorClasses("bg-[#df2027] text-white border-[#df2027] shadow-sm font-black");
-            onAddBroadcastStatus?.("📻 Hallelujah! Connected. Voice Of Jesus Radio is live.");
-          }).catch(err => {
-            console.error("Audio playback failure:", err);
+          playPromise.catch(err => {
+            console.warn("Audio playback failure:", err);
             setIsPlaying(false);
-            setIsBuffering(false);
             setStatusText("STATION MUTED");
             setStatusColorClasses("bg-amber-100 text-amber-800 border-amber-250");
             onAddBroadcastStatus?.("⚠️ Direct gateway offline. Retrying standard satellite feed...");
@@ -129,9 +123,8 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
         }
       } catch (err) {
         setIsPlaying(false);
-        setIsBuffering(false);
         setStatusText("OFFLINE");
-        setStatusColorClasses("bg-red-50 text-red-700 border-red-200");
+        setStatusColorClasses("bg-blue-900/30 text-yellow-400 border-blue-400");
         onAddBroadcastStatus?.("⚠️ Audio player failed to initialize. Reload the page.");
       }
     }
@@ -146,7 +139,7 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
   const handleAudioPlaying = () => {
     setIsBuffering(false);
     setStatusText("LIVE ON AIR");
-    setStatusColorClasses("bg-[#df2027] text-white border-[#df2027] shadow-sm font-extrabold");
+    setStatusColorClasses("bg-[#fcd34d] text-white border-[#fcd34d] shadow-sm font-extrabold");
   };
 
   const handleAudioError = () => {
@@ -163,10 +156,10 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
   const visualizerBarsCount = 26;
 
   return (
-    <div className={`relative rounded-[28px] p-6 md:p-8 bg-white border transition-all duration-700 overflow-hidden shadow-md ${
+    <div className={`relative w-full h-full p-4 md:p-6 bg-transparent transition-all duration-700 overflow-hidden ${
       isPlaying 
-        ? 'border-red-500 shadow-[0_4px_30px_rgba(223,32,39,0.1)] ring-1 ring-[#df2027]/20' 
-        : 'border-stone-200 hover:border-red-400/30'
+        ? 'ring-1 ring-[#df2027]/20 shadow-[0_4px_30px_rgba(223,32,39,0.15)]' 
+        : 'hover:border-yellow-400/30'
     }`} id="radio-player-container">
       
       {/* HTML5 Audio API Node */}
@@ -174,7 +167,6 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
         ref={audioRef}
         src={DEFAULT_STREAM_URL}
         preload="auto"
-        crossOrigin="anonymous"
         onLoadStart={handleAudioLoadStart}
         onPlaying={handleAudioPlaying}
         onError={handleAudioError}
@@ -183,20 +175,20 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
 
       {/* Atmospheric rich light glowing backgrounds - beautiful gold & red orbs */}
       <div className={`absolute -top-24 -right-24 w-80 h-80 rounded-full filter blur-3xl pointer-events-none transition-all duration-1000 ${
-        isPlaying ? 'bg-red-500/10' : 'bg-stone-50'
+        isPlaying ? 'bg-purple-500/10' : 'bg-[#1e3a8a]/50'
       }`}></div>
       <div className={`absolute -bottom-24 -left-24 w-80 h-80 rounded-full filter blur-3xl pointer-events-none transition-all duration-1000 ${
-        isPlaying ? 'bg-red-500/5' : 'bg-stone-100/50'
+        isPlaying ? 'bg-purple-500/5' : 'bg-[#1e1b4b]/30'
       }`}></div>
 
       {/* Internal Content Stack */}
       <div className="relative z-10 space-y-6">
          
          {/* TOP STATION BANNER HUD */}
-         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-stone-200 pb-5">
+         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 border-b border-blue-400/20 pb-4">
           <div className="flex items-center gap-3">
             <div className="relative flex items-center justify-center">
-              <span className={`flex h-3.5 w-3.5 rounded-full transition-all duration-500 ${isPlaying ? "bg-yellow-500" : "bg-stone-300"}`}>
+              <span className={`flex h-3.5 w-3.5 rounded-full transition-all duration-500 ${isPlaying ? "bg-yellow-500" : "bg-stone-600"}`}>
                 {isPlaying && (
                   <span className="absolute inline-flex h-full w-full rounded-full bg-yellow-400 animate-ping opacity-75"></span>
                 )}
@@ -205,28 +197,27 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
             
             <div className="text-left">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-black tracking-[0.25em] text-[#df2027] uppercase font-mono">ON-AIR FEED</span>
-                <Sparkles className="w-3.5 h-3.5 text-[#df2027] animate-pulse shrink-0" />
+                <Sparkles className="w-3.5 h-3.5 text-[#fcd34d] animate-pulse shrink-0" />
               </div>
-              <p className="text-[10px] text-stone-600 font-medium tracking-wide font-sans uppercase">Apostolic Hope & Healing</p>
+              <p className="text-[10px] text-blue-100 font-medium tracking-wide font-sans uppercase">Apostolic Hope & Healing</p>
             </div>
           </div>
 
           {/* Connected Roster Statistics Counter with clean background */}
-          <div className="flex items-center gap-2 bg-stone-50 px-3.5 py-1.5 rounded-xl border border-stone-200 text-[11px] font-mono font-bold text-stone-800 shadow-sm">
-            <Users className="w-3.5 h-3.5 text-[#df2027] shrink-0" />
+          <div className="flex items-center gap-2 bg-[#1e3a8a]/40 px-3.5 py-1.5 rounded-xl border border-blue-400/20 text-[11px] font-mono font-bold text-white shadow-sm">
+            <Users className="w-3.5 h-3.5 text-[#fcd34d] shrink-0" />
             <span>LIVE {listeners.toLocaleString()} LISTENING</span>
           </div>
         </div>
 
         {/* INTEGRATED TUNER SCREEN (GLASS DISPLAY DECK) */}
-        <div className="bg-[#fafbfe] rounded-2xl border border-stone-200 relative overflow-hidden p-6 md:p-8 text-center space-y-6 shadow-sm">
+        <div className="bg-[#1e1b4b]lue-950/80 rounded-2xl border border-blue-400/20 relative overflow-hidden p-5 md:p-6 text-center space-y-4 shadow-inner">
           
           {/* Aesthetic retro-modern terminal brackets */}
-          <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-stone-300"></div>
-          <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-stone-300"></div>
-          <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-stone-300"></div>
-          <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-stone-300"></div>
+          <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-stone-700"></div>
+          <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-stone-700"></div>
+          <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-stone-700"></div>
+          <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-stone-700"></div>
 
           {/* Current Status Indicator */}
           <div className="inline-block" id="stream-status-badge">
@@ -254,40 +245,40 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
                 <div className="absolute w-16 h-16 border border-neutral-900/60 rounded-full"></div>
                 
                 {/* Center Core */}
-                <div className="w-12 h-12 rounded-full bg-stone-900 border border-[#df2027]/30 flex items-center justify-center relative z-10 shadow-lg">
-                  <div className="w-6 h-6 rounded-full bg-[#df2027]/10 flex items-center justify-center">
-                    <Radio className="w-3.5 h-3.5 text-[#df2027]" />
+                <div className="w-12 h-12 rounded-full bg-[#1e3a8a]/40 border border-[#fcd34d]/30 flex items-center justify-center relative z-10 shadow-lg">
+                  <div className="w-6 h-6 rounded-full bg-[#fcd34d]/10 flex items-center justify-center">
+                    <Radio className="w-3.5 h-3.5 text-[#fcd34d]" />
                   </div>
                 </div>
               </div>
 
               {/* Large floating overlay play trigger UI */}
-              <div className="absolute inset-0 flex items-center justify-center bg-[#df2027]/10 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300">
-                <div className="bg-[#df2027] hover:bg-[#c1151c] text-white font-sans font-extrabold text-[11px] uppercase px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
-                  {isPlaying ? <Pause className="w-3.5 h-3.5 text-white" /> : <Play className="w-3.5 h-3.5 text-white fill-white" />}
+              <div className="absolute inset-0 flex items-center justify-center bg-[#fcd34d]/10 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-300">
+                <div className="bg-[#fcd34d] hover:bg-[#c1151c] text-white font-sans font-extrabold text-[11px] uppercase px-4 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                  {isPlaying ? <Pause className="w-3.5 h-3.5 text-white" /> : <Play className="w-3.5 h-3.5 text-white fill-stone-200" />}
                   <span>{isPlaying ? 'Pause Radio' : 'Stream Radio'}</span>
                 </div>
               </div>
 
               {/* Laser Pointer Light Accent */}
               {isPlaying && (
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#df2027]/40 rounded-full filter blur-md animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-[#fcd34d]/40 rounded-full filter blur-md animate-pulse"></div>
               )}
             </div>
           </div>
 
           {/* Active Show/Sermon Metagrid - Fully optimized for modern legible contrast */}
           <div className="space-y-1.5 relative z-10 max-w-lg mx-auto text-center">
-            <h3 className="text-stone-900 text-base md:text-lg font-bold font-sans uppercase tracking-tight">
+            <h3 className="text-white text-base md:text-lg font-bold font-sans uppercase tracking-tight">
               {currentShow.title}
             </h3>
-            <p className="text-xs text-[#df2027] font-semibold tracking-wide max-w-sm mx-auto font-sans">
+            <p className="text-xs text-[#fcd34d] font-semibold tracking-wide max-w-sm mx-auto font-sans">
               {currentShow.sub}
             </p>
           </div>
 
           {/* Stereo Digital Amplitude Equalizer Visualizer */}
-          <div className="flex justify-center items-end h-8 gap-0.5 pt-2 overflow-hidden border-t border-stone-200" id="live-audio-visualizer">
+          <div className="flex justify-center items-end h-8 gap-0.5 pt-2 overflow-hidden border-t border-blue-400/30" id="live-audio-visualizer">
             {Array.from({ length: visualizerBarsCount }).map((_, idx) => {
               const delay = (0.04 * (idx % 12)).toFixed(2);
               const duration = (0.5 + Math.random() * 0.7).toFixed(2);
@@ -296,15 +287,15 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
                 : { transform: 'scaleY(0.15)', animation: 'none' };
 
               // Beautiful Red-Orange glowing equalizer bars
-              let barGradients = "from-[#df2027] via-rose-500 to-[#df2027]"; // Default
+              let barGradients = "from-[#fcd34d] via-rose-500 to-[#df2027]"; // Default
               if (idx % 4 === 0) {
                 barGradients = "from-stone-950 via-stone-800 to-stone-600"; // Dark Onyx
               } else if (idx % 4 === 1) {
-                barGradients = "from-[#df2027] to-red-400"; // Pulse Red Light
+                barGradients = "from-[#fcd34d] to-yellow-500"; // Pulse Red Light
               } else if (idx % 4 === 2) {
-                barGradients = "from-rose-500 via-red-350 to-rose-400"; // Rose Gold
+                barGradients = "from-blue-500 via-blue-400 to-blue-300"; // Rose Gold
               } else if (idx % 4 === 3) {
-                barGradients = "from-[#df2027] via-red-650 to-stone-900"; // Dark Crimson
+                barGradients = "from-[#fcd34d] via-purple-600 to-stone-900"; // Dark Crimson
               }
 
               return (
@@ -319,7 +310,7 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
         </div>
 
         {/* MAIN HUD TENSION CONTROL SLATE */}
-        <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200 flex flex-col md:flex-row items-center gap-4 justify-between">
+        <div className="bg-[#1e3a8a]/20 rounded-2xl p-4 border border-blue-400/30 flex flex-col md:flex-row items-center gap-4 justify-between">
           
           {/* Main Power/Streaming Switch */}
           <button
@@ -328,8 +319,8 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
             id="play-stream-button"
             className={`w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 transform active:scale-95 border shrink-0 ${
               isPlaying
-                ? 'bg-[#df2027] border-[#df2027] text-white shadow-sm hover:scale-105'
-                : 'bg-black hover:bg-stone-900 border-black text-white hover:scale-105 shadow-sm'
+                ? 'bg-[#fcd34d] border-[#fcd34d] text-white shadow-sm hover:scale-105'
+                : 'bg-black hover:bg-[#1e3a8a]/40 border-black text-white hover:scale-105 shadow-sm'
             }`}
           >
             {isBuffering ? (
@@ -346,24 +337,24 @@ export default function RadioPlayer({ onAddBroadcastStatus }: RadioPlayerProps) 
 
           {/* Streaming Connection State */}
           <div className="text-center md:text-left flex-1 space-y-0.5">
-            <span className="block text-stone-500 text-[8px] font-bold uppercase tracking-[0.18em] font-mono">DIGITAL RECEIVER</span>
-            <span className="block text-xs font-semibold text-stone-800 tracking-wide">
+            <span className="block text-blue-200 text-[8px] font-bold uppercase tracking-[0.18em] font-mono">DIGITAL RECEIVER</span>
+            <span className="block text-xs font-semibold text-white tracking-wide">
               {isPlaying ? "ACTIVE GOSPEL BROADCAST STREAM" : "STANDBY STATION - HIT THE GOLD PLAY BUTTON!"}
             </span>
           </div>
 
           {/* Clean Glassmorphic Slider and Dial Controls */}
-          <div className="flex items-center gap-3 w-full md:w-auto md:min-w-[150px] bg-stone-100 py-1.5 px-3 rounded-xl border border-stone-200 shadow-sm" id="volume-pane">
+          <div className="flex items-center gap-3 w-full md:w-auto md:min-w-[150px] bg-[#1e3a8a]/40 py-1.5 px-3 rounded-xl border border-blue-400/30 shadow-sm" id="volume-pane">
             <button
               onClick={toggleMute}
-              className="text-stone-500 hover:text-[#df2027] transition-colors focus:outline-none h-6 w-6 flex items-center justify-center rounded-lg hover:bg-stone-200"
+              className="text-blue-200 hover:text-[#fcd34d] transition-colors focus:outline-none h-6 w-6 flex items-center justify-center rounded-lg hover:bg-stone-200"
               title={isMuted ? "Unmute stream" : "Mute stream"}
               id="volume-mute-button"
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-4 h-4 text-stone-400 animate-pulse" />
+                <VolumeX className="w-4 h-4 text-blue-100 animate-pulse" />
               ) : (
-                <Volume2 className="w-4 h-4 text-stone-600" />
+                <Volume2 className="w-4 h-4 text-white" />
               )}
             </button>
             

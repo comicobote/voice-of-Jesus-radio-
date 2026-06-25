@@ -554,7 +554,8 @@ switch ($action) {
             'fullname' => $name,
             'tx_ref' => $tx_ref,
             'network' => $network === 'MTN' ? 'MTN' : 'AIRTEL',
-            'redirect_url' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'good.ugbeatz.com') . '/'
+            'redirect_url' => 'https://' . ($_SERVER['HTTP_HOST'] ?? 'good.ugbeatz.com') . '/',
+            'type' => 'mobile_money_uganda'
         ];
 
         $ch = curl_init();
@@ -567,14 +568,14 @@ switch ($action) {
             'Authorization: Bearer ' . trim($secretKey),
             'Content-Type: application/json'
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
         $response = curl_exec($ch);
         $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $resData = json_decode($response, true);
         
-        if ($status_code === 200 && ($resData['status'] === 'success' || $resData['status'] === 'successful')) {
+        if ($status_code === 200 && isset($resData['status']) && ($resData['status'] === 'success' || $resData['status'] === 'successful')) {
             echo json_encode([
                 "status" => "success",
                 "tx_ref" => $tx_ref,
@@ -582,11 +583,11 @@ switch ($action) {
                 "data" => $resData['data']
             ]);
         } else {
-            // Check if there was no response or an error, return simulated success to keep transaction graceful
+            // Check if there was an error in charges, return it clearly to allow client routing
             echo json_encode([
-                "status" => "sandbox_success",
+                "status" => "error",
                 "tx_ref" => $tx_ref,
-                "message" => "Simulation active or payment channel initialized: " . ($resData['message'] ?? 'handshake OK')
+                "message" => $resData['message'] ?? 'Direct carrier handshake initial contact failed. Ensure mobile money is active.'
             ]);
         }
         break;
@@ -595,7 +596,7 @@ switch ($action) {
         $tx_ref = $_GET['tx_ref'] ?? '';
         if (!$tx_ref) {
             http_response_code(400);
-            echo json_encode(["error" => "tx_ref parameter is required"]);
+            echo json_encode(["status" => "error", "error" => "tx_ref parameter is required"]);
             break;
         }
 
@@ -612,48 +613,57 @@ switch ($action) {
             'Authorization: Bearer ' . trim($secretKey),
             'Content-Type: application/json'
         ]);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
         $response = curl_exec($ch);
         $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         $resData = json_decode($response, true);
 
-        if ($status_code === 200 && $resData['status'] === 'success' && isset($resData['data']) && ($resData['data']['status'] === 'successful' || $resData['data']['status'] === 'completed')) {
-            $amount = floatval($resData['data']['amount']);
-            $donorName = $resData['data']['customer']['name'] ?? 'Contributor of Faith';
+        if ($status_code === 200 && isset($resData['status']) && $resData['status'] === 'success') {
+            $status = $resData['data']['status'] ?? 'pending';
 
-            // Mark successful in local db log
-            if (isset($db['donations_log'][$tx_ref])) {
-                $db['donations_log'][$tx_ref]['status'] = 'successful';
-            }
+            if ($status === 'successful' || $status === 'completed') {
+                $amount = floatval($resData['data']['amount']);
+                $donorName = $resData['data']['customer']['name'] ?? 'Contributor of Faith';
 
-            // Record as donation
-            $newDonation = [
-                'name' => htmlspecialchars($donorName),
-                'amount' => intval($amount),
-                'time' => 'Just now'
-            ];
-            
-            // Check if already settled in local donations list
-            $alreadyAdded = false;
-            foreach ($db['donations'] as $d) {
-                if ($d['name'] === $donorName && $d['amount'] === intval($amount) && ($d['time'] === 'Just now' || $d['time'] === '1 second ago')) {
-                    $alreadyAdded = true;
-                    break;
+                // Mark successful in local db log
+                if (isset($db['donations_log'][$tx_ref])) {
+                    $db['donations_log'][$tx_ref]['status'] = 'successful';
                 }
-            }
 
-            if (!$alreadyAdded) {
-                array_unshift($db['donations'], $newDonation);
-                $db['settings']['total_received_ugx'] = ($db['settings']['total_received_ugx'] ?? 10000) + $amount;
-                write_local_db($db);
-            }
+                // Record as donation
+                $newDonation = [
+                    'name' => htmlspecialchars($donorName),
+                    'amount' => intval($amount),
+                    'time' => 'Just now'
+                ];
+                
+                // Check if already settled in local donations list
+                $alreadyAdded = false;
+                foreach ($db['donations'] as $d) {
+                    if ($d['name'] === $donorName && $d['amount'] === intval($amount) && ($d['time'] === 'Just now' || $d['time'] === '1 second ago')) {
+                        $alreadyAdded = true;
+                        break;
+                    }
+                }
 
-            echo json_encode(["status" => "success", "amount" => $amount, "donorName" => $donorName]);
+                if (!$alreadyAdded) {
+                    array_unshift($db['donations'], $newDonation);
+                    $db['settings']['total_received_ugx'] = ($db['settings']['total_received_ugx'] ?? 10000) + $amount;
+                    write_local_db($db);
+                }
+
+                echo json_encode(["status" => "success", "amount" => $amount, "donorName" => $donorName]);
+            } elseif ($status === 'pending') {
+                // Return actual pending status rather than treating it as premature success!
+                echo json_encode(["status" => "pending", "message" => "Handset USSD authentication is pending authorization."]);
+            } else {
+                echo json_encode(["status" => "failed", "message" => "Transaction failed with status: " . $status]);
+            }
         } else {
-            // fallback simulated success if user is playing with test credentials
-            echo json_encode(["status" => "success", "simulated" => true]);
+            // Return pending/unknown for now to keep polling until handset triggers or times out
+            echo json_encode(["status" => "pending", "message" => "Telecom handset handshake is initialized."]);
         }
         break;
 
